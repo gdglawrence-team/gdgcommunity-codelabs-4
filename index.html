@@ -1,0 +1,241 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>GDG Lawrence Full Stack Community / Creating a Profile Page</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="codelab4_profile"
+                  title="GDG Lawrence Full Stack Community / Creating a Profile Page"
+                  environment="web"
+                  feedback-link="">
+    
+      <google-codelab-step label="Overview" duration="2">
+        <p>This codelab provides the tutorial on how to create profile page for registered users in the the GDG Community project.</p>
+<h2 is-upgraded>What you will learn</h2>
+<ul>
+<li>How to create the Profile page</li>
+<li>More reusable Angular Components</li>
+<li>Fetching Data from Firebase</li>
+</ul>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Full Stack Development Environment Setup</li>
+<li>Familiar with Html, CSS, and Typescript</li>
+<li>Internet Connection</li>
+</ul>
+<p>At the end of this lab, you will have a form page that looks like the following:</p>
+<p class="image-container"><img alt="alt text" src="img/3fb5841bb08796f8.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating the Profile Page (pt.1) - Adding Logic" duration="0">
+        <p>Let&#39;s create the page that will display the user profile that we are pushign to Firebase via the form we created in the previous codelab.</p>
+<p>Let&#39;s start by creating the component and its route. At the root of the application folder, in Visual Studio Code command line, execute the following command:</p>
+<pre><code>ng generate component user-profile
+</code></pre>
+<p>Out of the generated files, let&#39;s navigate to the <em>user-profile.component.ts</em> file and add tsoem logic to it. Add the <em>encapsulation: ViewEncapsulation.None</em> to the component decorator section:</p>
+<pre><code>...
+@Component({
+  selector: &#39;app-user-profile&#39;,
+  templateUrl: &#39;./user-profile.component.html&#39;,
+  styleUrls: [&#39;./user-profile.component.less&#39;],
+  encapsulation: ViewEncapsulation.None
+})
+...
+</code></pre>
+<p>Inside the <em>UserProfileComponent</em> body, at the top of the class, let&#39;s add two properties to hold the user information data and the subscription to receive this same data.</p>
+<pre><code>...
+userInfo: MemberData;
+userSub: Subscription;
+...
+</code></pre>
+<p>In the constructor, let&#39;s inject the necessary services to fulfill the needs of this component as far as data and navigation needs is concerned:</p>
+<pre><code>...
+constructor(
+    private authService: AuthenticationService,
+    private userService: UserService,
+    private router: Router
+  ) { }
+...
+</code></pre>
+<p>Add the <em>OnInit</em> and ***OnDestroyimplemention to the class:</p>
+<pre><code>...
+export class UserProfileComponent implements OnInit, OnDestroy {
+...
+</code></pre>
+<p>In the <em>ngOnInit</em>, let&#39;s call the <strong>getUser()</strong> method from the <em>AuthenticationService</em>, and subscribe to it in order to receive the user information. Also hold on the subscription reference of this method in the <em>userSub</em> property so we can clean it up later.</p>
+<p>Then, inside the subscription body, check whether the user is available, and if so, fetch the user profile from the <em>UserService</em>&#39;s <strong>getUser()</strong> method, passing the logged in user&#39;s <strong>uid</strong>, and also hooking up to the Promise it returns by handling the <em>.then()</em> callback.</p>
+<p>In the Promise&#39;s resolving callback, fetch the Firebase document we&#39;re fetching associated to the user id we passed, and hold on to this reference in the <em>userInfo</em> property by calling the <strong>doc.data()</strong> method and casting it to a type of <em>MemberData</em> datatype. <strong>doc</strong> is a reference to a Firebase document, and the way to unwrap it or extract the data is by calling its <strong>.data()</strong> method:</p>
+<pre><code>...
+ngOnInit(): void {
+    this.userSub = this.authService.getUser().subscribe((user: User) =&gt; {
+      if (user) {
+        this.userService.getUser(user.uid).then((doc) =&gt; {
+          this.userInfo = doc.data() as MemberData;
+        });
+      }
+    });
+  }
+...
+</code></pre>
+<p>Now, implement the <strong>ngOnDestroy()</strong> method and make sure to clean up the subscription:</p>
+<pre><code>...
+ngOnDestroy(): void {
+    this.userSub.unsubscribe();
+  }
+...
+</code></pre>
+<p>Now, add a method that will be hooked up to a button in this page that will allow the users to join the GDG Community and navigate to the community page (later in a subsequent lab). For now let&#39;s add the hook:</p>
+<pre><code>...
+onJoinGDGCommunity() {
+    this.router.navigate([&#39;/gdg-community&#39;]);
+  }
+...
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating the Profile Page (pt.2) - Adding Markup" duration="0">
+        <p>Locate the file <em>user-profile.component.html</em> and let&#39;s add the following markup for the page:</p>
+<pre><code>&lt;div class=&#34;user-profile-page&#34;&gt;
+    &lt;app-bar [showProfile]=&#34;false&#34;&gt;&lt;/app-bar&gt;
+    &lt;section class=&#34;user-profile-wrapper&#34;&gt;
+        &lt;div class=&#34;user-profile-panel&#34;&gt;
+            &lt;div class=&#34;img-wrapper&#34;&gt;&lt;img src=&#34;&#123;&#123; userInfo?.photoURL }}&#34; /&gt;&lt;/div&gt;
+            &lt;div class=&#34;user-display-name&#34;&gt;&#123;&#123; userInfo?.name }}&lt;/div&gt;
+            &lt;div class=&#34;user-expertise&#34;&gt;&#123;&#123; userInfo?.skills | titlecase }}&lt;/div&gt;
+            &lt;div class=&#34;user-description&#34;&gt;&#123;&#123; userInfo?.description }}&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button (click)=&#34;onJoinGDGCommunity()&#34; class=&#34;join-gdg common-btn&#34;&gt;
+            Join GDG Community
+        &lt;/button&gt;
+    &lt;/section&gt;
+&lt;/div&gt;
+</code></pre>
+<p>This is a simple structure where we&#39;re wiring up the properties and methods in the <em>user-profile.compoment.ts</em> file before, and out of the <strong>userInfo</strong> object, we consume the <em>photoURL</em>, <em>name</em>, <em>skills</em> and <em>description</em>.</p>
+<p>Notice what the first child of the <strong>user-profile-page</strong> div container is: yes, the <strong>app bar</strong>!! Since this is a reusable component, we can use it anywhere! Here we are displaying at the top of the page, and passing some of the optional inputs we created. This case we are passing the flag whether we&#39;d like to show the profile icon. Since we are already in the profile page, there&#39;s no need to have an icon to navigate to itself, hence the passing of <strong>false</strong>. Default is <strong>true</strong>.</p>
+<pre><code>...
+&lt;app-bar [showProfile]=&#34;false&#34;&gt;&lt;/app-bar&gt;
+...
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating the Profile Page (pt.3) - Adding CSS Styles" duration="0">
+        <p>Let&#39;s locate the <em>user-profile.component.less</em> file and paste the following code:</p>
+<pre><code>@import &#39;./../../assets/styles/colors.less&#39;;
+
+.user-profile-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-profile-wrapper {
+    padding: 32px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .user-profile-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        
+        .img-wrapper {
+            width: 100px;
+            height: 100px;
+            border: 10px solid @color_profile;
+            border-radius: 50%;
+            
+            img {
+                max-width: 100%;
+                border-radius: 50%;
+            }
+        }
+
+        .user-display-name {
+            color: grey;
+            font-size: 2em;
+            margin-top: 32px;
+        }
+
+        .user-expertise {
+            color: @color_profile;
+            font-size: 1.2em;
+        }
+
+        .user-description {
+            margin-top: 12px;
+            color: grey;
+            font-size: 1.2em;
+            width: 250px;
+        }
+    }
+
+    .join-gdg {
+        background: @color_profile;
+    }
+}
+</code></pre>
+<p>As far as the structure goes, we&#39;ve done the same thing as in other pages when it comes to responsive design strategies. In the <strong>.user-profile-page</strong> outer container, we&#39;ve set it to be 100% of the browser&#39;s viewport (<em>height: 100vh</em>) and placing the child elements in a column fashion.</p>
+<p>We made one of the child containers (<em>.user-profile-wrapper</em>) occupy 1 fractional percentage of the whole screen (<em>flex: 1</em>) while pushing all other elements around it (above and below)</p>
+<p class="image-container"><img alt="alt text" src="img/48eb8357ba2571e3.png"></p>
+<p>Now, let&#39;s take this page for a spin - from beginning to end of the registration workflow.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Seeing the Profile Page Right After Form Registration" duration="0">
+        <p>In order to see the Profile Page, you either have to come in fresh after a registration, but if you have registered already, you won&#39;t see the Form Registration Page. Fortunately, there&#39;s a hack you can implement to see it and then navigate to the Profile page. For that, please try the following:</p>
+<ul>
+<li>Make sure you don&#39;t have the <strong>userId</strong> stored in your browsing&#39;s local storage. Open up the Chrome Developer Tools (F12, or via Settings -&gt; More Tools -&gt; Developer Tools, or right-clicking on the page and selecting the <em>Inspect</em> option).</li>
+<li>Select the <em>Application</em> tab, which holds the many storage options Chrome has. On the left hand side, find the <em>Storage -&gt; Local Storage</em>. Expand the <em>Local Storage</em> to find the <em>http://localhost:4200</em> address; you should see an entry called <strong>userId</strong> with a value. If you do, right-click and delete this row.</li>
+</ul>
+<p class="image-container"><img alt="alt text" src="img/34f0e68e88718cae.png"></p>
+<ul>
+<li>After doing this, navigate again back to the root of the application (<em>http://localhost:4200</em>) to start the flow again. You should see the form page again, provide new values (note: these new values will be overwritten in Firebase).</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="0">
+        <p>This page is ready to go! The next codelab will focus on joining the GDG Community Page, sending your information to the GDG Community Member List and sending your logged-in status so other members can see when you&#39;re logged in in real-time.</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>

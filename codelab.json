@@ -1,0 +1,24 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2020-06-21T17:49:15-04:00",
+  "id": "codelab4_profile",
+  "duration": 2,
+  "title": "GDG Lawrence Full Stack Community / Creating a Profile Page",
+  "authors": "Roman Jaquez",
+  "summary": "Create the Profile Page for the GDG Community project",
+  "source": "gdgfullstack_labs/codelabs-4.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "meta"
+  ],
+  "tags": [
+    "beginner"
+  ],
+  "url": "codelab4_profile"
+}
